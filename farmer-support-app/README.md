@@ -33,19 +33,13 @@ A comprehensive farmer support application built with React Native and Expo, fea
    ```bash
    npm install
    ```
-   or
-   ```bash
-   yarn install
-   ```
 
 3. **Start the development server:**
    ```bash
-   npm start
+   npx expo start
    ```
-   or
-   ```bash
-   expo start
-   ```
+   
+   **Note:** If you see errors about missing assets (icon.png, splash.png), don't worry! The app will work fine in development mode. Check `TROUBLESHOOTING.md` for details.
 
 4. **Run on Android:**
    ```bash
