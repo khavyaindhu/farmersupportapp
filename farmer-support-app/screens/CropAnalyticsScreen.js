@@ -8,7 +8,6 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
-import { PieChart } from 'react-native-chart-kit';
 
 const CropAnalyticsScreen = ({ navigation }) => {
   const pieData = [
@@ -76,20 +75,12 @@ const CropAnalyticsScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={pieData}
-              width={Dimensions.get('window').width - 80}
-              height={200}
-              chartConfig={{
-                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-              absolute
-            />
-          </View>
+        <View style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>📊 Pie Chart Placeholder</Text>
+          <Text style={{ fontSize: 12, color: '#666', marginTop: 10 }}>
+            Chart data will appear here
+          </Text>
+        </View>
 
           <View style={styles.legend}>
             <View style={styles.legendRow}>

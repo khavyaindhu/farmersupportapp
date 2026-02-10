@@ -6,274 +6,236 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
+  ImageBackground,
 } from 'react-native';
 
 const FarmerDashboard = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
+      {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={styles.backButton}>←</Text>
           <Text style={styles.headerTitle}>🌾 Farmer Support App</Text>
-          <View style={styles.headerIcons}>
-            <Text style={styles.icon}>⚙️</Text>
-          </View>
+          <Text style={styles.icon}>⚙️</Text>
         </View>
       </View>
 
-      <ScrollView style={styles.content}>
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome, Rahul</Text>
-          <Text style={styles.welcomeSubtitle}>Welcome, Aamra</Text>
-        </View>
+      <ScrollView>
 
+        {/* BANNER */}
+        <ImageBackground
+          source={{
+            uri: 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6',
+          }}
+          style={styles.banner}
+          imageStyle={{ borderRadius: 20 }}
+        >
+          <View style={styles.overlay}>
+            <Text style={styles.welcomeTitle}>Welcome, Rahul</Text>
+            <Text style={styles.welcomeSubtitle}>Welcome, Admin</Text>
+          </View>
+        </ImageBackground>
+
+        {/* ROLE CARDS */}
         <View style={styles.roleButtons}>
-          <TouchableOpacity style={[styles.roleButton, styles.roleButtonActive]}>
+          <TouchableOpacity style={[styles.roleCard, styles.roleActive]}>
             <Text style={styles.roleIcon}>👤</Text>
             <Text style={styles.roleText}>Admin</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.roleButton}>
+          <TouchableOpacity style={styles.roleCard}>
             <Text style={styles.roleIcon}>👨‍💼</Text>
-            <Text style={styles.roleText}>Officer</Text>
+            <Text style={styles.roleTextDark}>Officer</Text>
           </TouchableOpacity>
         </View>
 
+        {/* MENU */}
         <View style={styles.menuList}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>👥</Text>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Manage Farmers</Text>
-              <Text style={styles.menuSubtitle}>320 Farmers</Text>
-            </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>320</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>👨‍🌾</Text>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Manage Experts</Text>
-              <Text style={styles.menuSubtitle}>15 Experts</Text>
-            </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>15</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>🌱</Text>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>Crop Guidance</Text>
-              <Text style={styles.menuSubtitle}>मार्गदर्शन देखें</Text>
-            </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>45</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Text style={styles.menuIcon}>📊</Text>
-            <View style={styles.menuTextContainer}>
-              <Text style={styles.menuTitle}>APMC Rates</Text>
-              <Text style={styles.menuSubtitle}>एपीएमसी दरें देखें</Text>
-            </View>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>320</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
+          <MenuItem icon="👥" title="Manage Farmers" count="320" />
+          <MenuItem icon="👨‍🌾" title="Manage Experts" count="15" />
+          <MenuItem icon="🌱" title="Crop Guidance" count="45" />
+          <MenuItem icon="📊" title="APMC Rates" count="45" />
         </View>
 
-        <View style={styles.pagination}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-        </View>
-
-        <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>320 min</Text>
-        </View>
       </ScrollView>
-
-      <View style={styles.fieldBackground} />
     </View>
   );
 };
 
+/* -------- COMPONENT -------- */
+
+const MenuItem = ({ icon, title, count }) => (
+  <TouchableOpacity style={styles.menuItem}>
+    <Text style={styles.menuIcon}>{icon}</Text>
+    <Text style={styles.menuTitle}>{title}</Text>
+
+    <View style={styles.countBadge}>
+      <Text style={styles.countText}>{count}</Text>
+    </View>
+
+    <Text style={styles.chevron}>›</Text>
+  </TouchableOpacity>
+);
+
+/* -------- STYLES -------- */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5DC',
+    backgroundColor: '#F3F7F2',
   },
+
   header: {
-    backgroundColor: '#2D5F3F',
-    paddingTop: 50,
+    backgroundColor: '#1F5C45',
+    paddingTop: 55,
     paddingBottom: 20,
     paddingHorizontal: 20,
+    borderBottomLeftRadius: 25,
+    borderBottomRightRadius: 25,
   },
+
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   backButton: {
     color: '#FFF',
-    fontSize: 24,
-    fontWeight: '600',
+    fontSize: 22,
   },
+
   headerTitle: {
     color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '600',
   },
-  headerIcons: {
-    flexDirection: 'row',
-  },
+
   icon: {
     fontSize: 20,
+    color: '#FFF',
   },
-  content: {
-    flex: 1,
-  },
-  welcomeSection: {
-    padding: 20,
-    backgroundColor: '#5A8C69',
+
+  /* Banner */
+
+  banner: {
+    height: 160,
     marginHorizontal: 20,
     marginTop: 20,
-    borderRadius: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 4,
   },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+
   welcomeTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
     color: '#FFF',
-    marginBottom: 5,
+    fontSize: 20,
+    fontWeight: '700',
   },
+
   welcomeSubtitle: {
+    color: '#E0F2E9',
     fontSize: 14,
-    color: '#E8F5E9',
+    marginTop: 4,
   },
+
+  /* Role Cards */
+
   roleButtons: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginTop: 20,
-    gap: 15,
+    justifyContent: 'space-between',
   },
-  roleButton: {
-    flex: 1,
+
+  roleCard: {
+    width: '47%',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 14,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E8F5E9',
-    padding: 15,
-    borderRadius: 12,
-    gap: 10,
-  },
-  roleButtonActive: {
-    backgroundColor: '#4CAF50',
-  },
-  roleIcon: {
-    fontSize: 24,
-  },
-  roleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFF',
-  },
-  menuList: {
-    marginTop: 20,
-    paddingHorizontal: 20,
-  },
-  menuItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    gap: 8,
     elevation: 3,
   },
-  menuIcon: {
-    fontSize: 32,
-    marginRight: 15,
+
+  roleActive: {
+    backgroundColor: '#4CAF50',
   },
-  menuTextContainer: {
-    flex: 1,
+
+  roleIcon: {
+    fontSize: 22,
   },
-  menuTitle: {
-    fontSize: 16,
+
+  roleText: {
+    color: '#FFF',
     fontWeight: '600',
+  },
+
+  roleTextDark: {
     color: '#333',
-    marginBottom: 3,
+    fontWeight: '600',
   },
-  menuSubtitle: {
-    fontSize: 12,
-    color: '#666',
+
+  /* Menu */
+
+  menuList: {
+    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 40,
   },
+
+  menuItem: {
+    backgroundColor: '#FFF',
+    padding: 16,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 3,
+  },
+
+  menuIcon: {
+    fontSize: 30,
+    marginRight: 14,
+    width: 36,
+  },
+
+  menuTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2F6B4F',
+  },
+
   countBadge: {
     backgroundColor: '#4CAF50',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 12,
     marginRight: 10,
   },
+
   countText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
   },
+
   chevron: {
-    fontSize: 24,
+    fontSize: 22,
     color: '#999',
-  },
-  pagination: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 8,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#CCC',
-  },
-  dotActive: {
-    backgroundColor: '#4CAF50',
-    width: 24,
-  },
-  timeContainer: {
-    alignItems: 'flex-end',
-    paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  timeText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  fieldBackground: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 150,
-    backgroundColor: '#C4B896',
-    opacity: 0.3,
-    zIndex: -1,
   },
 });
 

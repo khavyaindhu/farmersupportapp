@@ -8,7 +8,6 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
-import { BarChart } from 'react-native-chart-kit';
 
 const VisitFrequencyScreen = ({ navigation }) => {
   const barData = {
@@ -54,40 +53,12 @@ const VisitFrequencyScreen = ({ navigation }) => {
             <Text style={styles.statsValue}>378</Text>
           </View>
 
-          <View style={styles.chartContainer}>
-            <BarChart
-              data={barData}
-              width={Dimensions.get('window').width - 80}
-              height={220}
-              yAxisLabel=""
-              yAxisSuffix=""
-              chartConfig={{
-                backgroundColor: '#FFF',
-                backgroundGradientFrom: '#FFF',
-                backgroundGradientTo: '#FFF',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                style: {
-                  borderRadius: 16,
-                },
-                propsForBackgroundLines: {
-                  strokeDasharray: '',
-                  stroke: '#E0E0E0',
-                  strokeWidth: 1,
-                },
-                propsForLabels: {
-                  fontSize: 10,
-                },
-              }}
-              style={{
-                marginVertical: 8,
-                borderRadius: 16,
-              }}
-              showValuesOnTopOfBars
-              fromZero
-            />
-          </View>
+<View style={{ height: 220, justifyContent: 'center', alignItems: 'center' }}>
+  <Text>📊 Bar Chart Placeholder</Text>
+  <Text style={{ fontSize: 12, color: '#666', marginTop: 10 }}>
+    Visit frequency data will appear here
+  </Text>
+</View>
 
           <View style={styles.chartFooter}>
             <Text style={styles.chartFooterTitle}>Taylor Visits: 201</Text>
