@@ -6,6 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
@@ -23,6 +27,11 @@ const LoginScreen = ({ navigation }) => {
     // Validate mobile number
     if (!mobileNumber) {
       Alert.alert('Error', 'Please enter mobile number');
+      return;
+    }
+
+    if (mobileNumber.length !== 10) {
+      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
       return;
     }
 
@@ -46,316 +55,384 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header with logo */}
-      <View style={styles.header}>
-        <Text style={styles.logoEmoji}>🌾</Text>
-        <Text style={styles.logoText}>Farmer Support App</Text>
-        <TouchableOpacity style={styles.refreshButton}>
-          <Text style={styles.refreshIcon}>⟳</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* User Avatar */}
-      <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
-          <View style={styles.avatarHead} />
-          <View style={styles.avatarNeck} />
-          <View style={styles.avatarShirt} />
-        </View>
-      </View>
-
-      {/* User Selection Text */}
-      <Text style={styles.userSelectionText}>👤  User Selection</Text>
-
-      {/* Role Selection Buttons */}
-      <View style={styles.roleContainer}>
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            selectedRole === 'farmer' && styles.roleButtonActive,
-          ]}
-          onPress={() => setSelectedRole('farmer')}
+    <ImageBackground
+      source={{
+        uri: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=1200&q=80',
+      }}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
         >
-          <Text
-            style={[
-              styles.roleButtonText,
-              selectedRole === 'farmer' && styles.roleButtonTextActive,
-            ]}
-          >
-            Farmer
-          </Text>
-        </TouchableOpacity>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Logo Section */}
+            <View style={styles.logoSection}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoEmoji}>🌾</Text>
+              </View>
+              <Text style={styles.appTitle}>Farmer Support App</Text>
+              <Text style={styles.appSubtitle}>Empowering Agriculture Together</Text>
+            </View>
 
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            selectedRole === 'officer' && styles.roleButtonActive,
-          ]}
-          onPress={() => setSelectedRole('officer')}
-        >
-          <Text
-            style={[
-              styles.roleButtonText,
-              selectedRole === 'officer' && styles.roleButtonTextActive,
-            ]}
-          >
-            Officer
-          </Text>
-        </TouchableOpacity>
+            {/* Login Card */}
+            <View style={styles.loginCard}>
+              {/* User Selection Text */}
+              <Text style={styles.cardTitle}>👤 User Login</Text>
 
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            selectedRole === 'admin' && styles.roleButtonActive,
-          ]}
-          onPress={() => setSelectedRole('admin')}
-        >
-          <Text
-            style={[
-              styles.roleButtonText,
-              selectedRole === 'admin' && styles.roleButtonTextActive,
-            ]}
-          >
-            Admin
-          </Text>
-        </TouchableOpacity>
+              {/* Role Selection Buttons */}
+              <View style={styles.roleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    selectedRole === 'farmer' && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setSelectedRole('farmer')}
+                >
+                  <Text style={styles.roleEmoji}>👨‍🌾</Text>
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      selectedRole === 'farmer' && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Farmer
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    selectedRole === 'officer' && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setSelectedRole('officer')}
+                >
+                  <Text style={styles.roleEmoji}>👨‍💼</Text>
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      selectedRole === 'officer' && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Officer
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.roleButton,
+                    selectedRole === 'admin' && styles.roleButtonActive,
+                  ]}
+                  onPress={() => setSelectedRole('admin')}
+                >
+                  <Text style={styles.roleEmoji}>👤</Text>
+                  <Text
+                    style={[
+                      styles.roleButtonText,
+                      selectedRole === 'admin' && styles.roleButtonTextActive,
+                    ]}
+                  >
+                    Admin
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Mobile Number Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Mobile Number</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputIcon}>📱</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter 10-digit mobile number"
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    value={mobileNumber}
+                    onChangeText={setMobileNumber}
+                    maxLength={10}
+                  />
+                </View>
+              </View>
+
+              {/* Login Button */}
+              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                <Text style={styles.loginButtonText}>Login</Text>
+              </TouchableOpacity>
+
+              {/* Footer Links */}
+              <View style={styles.footer}>
+                <TouchableOpacity>
+                  <Text style={styles.footerLink}>Forgot Password?</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                  <Text style={styles.footerLinkBold}>New User? Sign-up</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Test Credentials Info */}
+              <View style={styles.testCredentials}>
+                <Text style={styles.testTitle}>🔑 Test Credentials:</Text>
+                <View style={styles.credentialRow}>
+                  <Text style={styles.credentialLabel}>Farmer:</Text>
+                  <Text style={styles.credentialValue}>9876543210</Text>
+                </View>
+                <View style={styles.credentialRow}>
+                  <Text style={styles.credentialLabel}>Officer:</Text>
+                  <Text style={styles.credentialValue}>9876543211</Text>
+                </View>
+                <View style={styles.credentialRow}>
+                  <Text style={styles.credentialLabel}>Admin:</Text>
+                  <Text style={styles.credentialValue}>9876543212</Text>
+                </View>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
-
-      {/* Mobile Number Input */}
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Mobile Number</Text>
-        <View style={styles.inputWrapper}>
-          <Text style={styles.inputIcon}>📱</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter mobile number"
-            placeholderTextColor="#999"
-            keyboardType="phone-pad"
-            value={mobileNumber}
-            onChangeText={setMobileNumber}
-            maxLength={10}
-          />
-        </View>
-      </View>
-
-      {/* Login Button */}
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-        <Text style={styles.loginButtonText}>Login</Text>
-      </TouchableOpacity>
-
-      {/* Footer Links */}
-      <View style={styles.footer}>
-        <TouchableOpacity>
-          <Text style={styles.footerLink}>Forgot Password?</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Text style={styles.footerLink}>New User? Sign-up</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Test Credentials Info */}
-      <View style={styles.testCredentials}>
-        <Text style={styles.testTitle}>Test Credentials:</Text>
-        <Text style={styles.testText}>Farmer: 9876543210</Text>
-        <Text style={styles.testText}>Officer: 9876543211</Text>
-        <Text style={styles.testText}>Admin: 9876543212</Text>
-      </View>
-
-      {/* Field Background */}
-      <View style={styles.fieldBackground} />
-    </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundImage: {
     flex: 1,
-    backgroundColor: '#F5F5DC',
+    width: '100%',
+    height: '100%',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+
+  keyboardView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    paddingTop: 50,
-    paddingBottom: 20,
-    backgroundColor: '#3D6B4D',
-    position: 'relative',
+    paddingVertical: 20,
   },
+
+  /* Logo Section */
+
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 40,
+  },
+
+  logoCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+
   logoEmoji: {
-    fontSize: 24,
-    marginRight: 8,
+    fontSize: 40,
   },
-  logoText: {
-    fontSize: 18,
+
+  appTitle: {
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#FFF',
+    marginBottom: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
-  refreshButton: {
-    position: 'absolute',
-    right: 20,
-    top: 50,
+
+  appSubtitle: {
+    fontSize: 14,
+    color: '#E8F5E9',
+    fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-  refreshIcon: {
-    fontSize: 24,
-    color: '#FFF',
+
+  /* Login Card */
+
+  loginCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    marginHorizontal: 20,
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  avatarContainer: {
-    alignItems: 'center',
-    marginTop: 40,
-    marginBottom: 10,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: '#E8F5E9',
-    borderRadius: 50,
-    paddingTop: 15,
-  },
-  avatarHead: {
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#D4A574',
-    marginBottom: 2,
-  },
-  avatarNeck: {
-    width: 15,
-    height: 8,
-    backgroundColor: '#D4A574',
-    marginBottom: 0,
-  },
-  avatarShirt: {
-    width: 60,
-    height: 35,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: '#5A8C69',
-  },
-  userSelectionText: {
-    fontSize: 16,
-    fontWeight: '600',
+
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#2D5F3F',
     textAlign: 'center',
-    color: '#333',
-    marginTop: 15,
     marginBottom: 20,
   },
+
+  /* Role Selection */
+
   roleContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginHorizontal: 40,
-    marginBottom: 30,
-    gap: 10,
+    justifyContent: 'space-between',
+    marginBottom: 25,
+    gap: 8,
   },
+
   roleButton: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    borderWidth: 1.5,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 2,
     borderColor: '#3D6B4D',
     backgroundColor: '#FFF',
     alignItems: 'center',
   },
+
   roleButtonActive: {
     backgroundColor: '#3D6B4D',
+    borderColor: '#3D6B4D',
   },
+
+  roleEmoji: {
+    fontSize: 20,
+    marginBottom: 5,
+  },
+
   roleButtonText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#3D6B4D',
   },
+
   roleButtonTextActive: {
     color: '#FFF',
   },
+
+  /* Input */
+
   inputContainer: {
-    paddingHorizontal: 40,
-    marginBottom: 25,
+    marginBottom: 20,
   },
+
   label: {
     fontSize: 14,
     color: '#333',
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: '600',
   },
+
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    borderWidth: 1,
+    backgroundColor: '#F9F9F9',
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#DDD',
-    paddingHorizontal: 12,
+    paddingHorizontal: 15,
   },
+
   inputIcon: {
-    fontSize: 18,
+    fontSize: 20,
     marginRight: 10,
   },
+
   input: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
     color: '#333',
   },
+
+  /* Login Button */
+
   loginButton: {
     backgroundColor: '#3D6B4D',
-    marginHorizontal: 40,
-    paddingVertical: 15,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
+
   loginButtonText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
+
+  /* Footer */
+
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 40,
     marginBottom: 20,
   },
+
   footerLink: {
     color: '#3D6B4D',
     fontSize: 13,
     fontWeight: '500',
   },
-  testCredentials: {
-    backgroundColor: '#FFF',
-    marginHorizontal: 40,
-    padding: 15,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+
+  footerLinkBold: {
+    color: '#3D6B4D',
+    fontSize: 13,
+    fontWeight: '700',
   },
+
+  /* Test Credentials */
+
+  testCredentials: {
+    backgroundColor: '#E8F5E9',
+    padding: 15,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#C8E6C9',
+  },
+
   testTitle: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: '#2E7D32',
+    marginBottom: 10,
   },
-  testText: {
+
+  credentialRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+
+  credentialLabel: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 3,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
-  fieldBackground: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 120,
-    backgroundColor: '#C4B896',
-    opacity: 0.3,
-    zIndex: -1,
+
+  credentialValue: {
+    fontSize: 12,
+    color: '#2E7D32',
+    fontWeight: '700',
   },
 });
 

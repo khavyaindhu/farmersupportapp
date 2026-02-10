@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import SplashScreen from './screens/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
+import RegisterScreen from './screens/RegisterScreen';
 import AdminDashboard from './screens/AdminDashboard';
 import FarmerDashboard from './screens/FarmerDashboard';
 import ExpertDashboard from './screens/ExpertDashboard';
@@ -24,6 +25,13 @@ export default function App() {
       >
         <Stack.Screen name="Splash" component={SplashScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
+     <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen}
+          options={{
+            animation: 'slide_from_right',
+          }}
+        />
         <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
         <Stack.Screen name="FarmerDashboard" component={FarmerDashboard} />
         <Stack.Screen name="ExpertDashboard" component={ExpertDashboard} />
