@@ -5,52 +5,83 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
+import StorageService from '../services/StorageService';
 
 const LoginScreen = ({ navigation }) => {
   const [mobileNumber, setMobileNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState('farmer');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  // Test credentials
-  const testCredentials = {
-    farmer: '9876543210',
-    officer: '9876543211',
-    admin: '9876543212',
+  const showError = (message) => {
+    setErrorMessage(message);
+    setShowErrorModal(true);
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    console.log('Login button pressed');
+    
     // Validate mobile number
     if (!mobileNumber) {
-      Alert.alert('Error', 'Please enter mobile number');
+      showError('Please enter mobile number');
       return;
     }
 
     if (mobileNumber.length !== 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      showError('Please enter a valid 10-digit mobile number');
       return;
     }
 
-    // Check test credentials
-    if (mobileNumber === testCredentials.farmer) {
-      navigation.navigate('FarmerDashboard');
-    } else if (mobileNumber === testCredentials.officer) {
-      navigation.navigate('ExpertDashboard');
-    } else if (mobileNumber === testCredentials.admin) {
-      navigation.navigate('AdminDashboard');
-    } else {
-      // For demo purposes, navigate based on selected role
-      if (selectedRole === 'admin') {
-        navigation.navigate('AdminDashboard');
-      } else if (selectedRole === 'officer') {
-        navigation.navigate('ExpertDashboard');
+    // Validate password
+    if (!password) {
+      showError('Please enter password');
+      return;
+    }
+
+    if (password.length < 6) {
+      showError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting login with:', { mobileNumber, role: selectedRole });
+      
+      // Attempt login using StorageService
+      const result = await StorageService.loginUser(mobileNumber, password, selectedRole);
+      
+      console.log('Login result:', result);
+
+      if (result.success) {
+        console.log('Login successful, navigating to dashboard');
+        
+        // Navigate based on role
+        if (result.user.role === 'admin') {
+          navigation.navigate('AdminDashboard');
+        } else if (result.user.role === 'officer') {
+          navigation.navigate('ExpertDashboard');
+        } else {
+          navigation.navigate('FarmerDashboard');
+        }
       } else {
-        navigation.navigate('FarmerDashboard');
+        showError(result.message || 'Invalid credentials or role mismatch');
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      showError('An error occurred during login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -152,13 +183,45 @@ const LoginScreen = ({ navigation }) => {
                     value={mobileNumber}
                     onChangeText={setMobileNumber}
                     maxLength={10}
+                    editable={!isLoading}
                   />
                 </View>
               </View>
 
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputIcon}>🔒</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    placeholderTextColor="#999"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity 
+                    onPress={() => setShowPassword(!showPassword)} 
+                    style={styles.eyeButton}
+                  >
+                    <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
               {/* Login Button */}
-              <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-                <Text style={styles.loginButtonText}>Login</Text>
+              <TouchableOpacity 
+                style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Login</Text>
+                )}
               </TouchableOpacity>
 
               {/* Footer Links */}
@@ -176,21 +239,46 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={styles.testTitle}>🔑 Test Credentials:</Text>
                 <View style={styles.credentialRow}>
                   <Text style={styles.credentialLabel}>Farmer:</Text>
-                  <Text style={styles.credentialValue}>9876543210</Text>
+                  <Text style={styles.credentialValue}>9876543210 / pass123</Text>
                 </View>
                 <View style={styles.credentialRow}>
                   <Text style={styles.credentialLabel}>Officer:</Text>
-                  <Text style={styles.credentialValue}>9876543211</Text>
+                  <Text style={styles.credentialValue}>9876543211 / pass123</Text>
                 </View>
                 <View style={styles.credentialRow}>
                   <Text style={styles.credentialLabel}>Admin:</Text>
-                  <Text style={styles.credentialValue}>9876543212</Text>
+                  <Text style={styles.credentialValue}>9876543212 / pass123</Text>
                 </View>
               </View>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.errorIconContainer}>
+              <Text style={styles.errorIcon}>❌</Text>
+            </View>
+            <Text style={styles.modalTitle}>Login Error</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowErrorModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 };
@@ -359,6 +447,14 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 
+  eyeButton: {
+    padding: 5,
+  },
+
+  eyeIcon: {
+    fontSize: 20,
+  },
+
   /* Login Button */
 
   loginButton: {
@@ -372,6 +468,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
+  },
+
+  loginButtonDisabled: {
+    opacity: 0.6,
   },
 
   loginButtonText: {
@@ -432,6 +532,80 @@ const styles = StyleSheet.create({
   credentialValue: {
     fontSize: 12,
     color: '#2E7D32',
+    fontWeight: '700',
+  },
+
+  /* Error Modal */
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  modalContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 30,
+    width: '90%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  errorIcon: {
+    fontSize: 48,
+  },
+
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2D5F3F',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+
+  modalMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+
+  modalButton: {
+    backgroundColor: '#3D6B4D',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    minWidth: 200,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '700',
   },
 });

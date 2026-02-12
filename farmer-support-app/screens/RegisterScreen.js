@@ -10,13 +10,18 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
+  Modal,
 } from 'react-native';
+import StorageService from '../services/StorageService';
 
 const RegisterScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     fullName: '',
     mobileNumber: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     aadharNumber: '',
     address: '',
     pincode: '',
@@ -24,68 +29,125 @@ const RegisterScreen = ({ navigation }) => {
     district: '',
   });
   const [selectedRole, setSelectedRole] = useState('farmer');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
   };
 
+  const showError = (message) => {
+    setErrorMessage(message);
+    setShowErrorModal(true);
+  };
+
   const validateForm = () => {
     if (!formData.fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
+      showError('Please enter your full name');
       return false;
     }
 
     if (!formData.mobileNumber || formData.mobileNumber.length !== 10) {
-      Alert.alert('Error', 'Please enter a valid 10-digit mobile number');
+      showError('Please enter a valid 10-digit mobile number');
       return false;
     }
 
     if (!formData.email.trim() || !formData.email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      showError('Please enter a valid email address');
+      return false;
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      showError('Password must be at least 6 characters long');
+      return false;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      showError('Passwords do not match');
       return false;
     }
 
     if (!formData.aadharNumber || formData.aadharNumber.length !== 12) {
-      Alert.alert('Error', 'Please enter a valid 12-digit Aadhar number');
+      showError('Please enter a valid 12-digit Aadhar number');
       return false;
     }
 
     if (!formData.address.trim()) {
-      Alert.alert('Error', 'Please enter your address');
+      showError('Please enter your address');
       return false;
     }
 
     if (!formData.pincode || formData.pincode.length !== 6) {
-      Alert.alert('Error', 'Please enter a valid 6-digit pincode');
+      showError('Please enter a valid 6-digit pincode');
       return false;
     }
 
     if (!formData.state.trim()) {
-      Alert.alert('Error', 'Please enter your state');
+      showError('Please enter your state');
       return false;
     }
 
     if (!formData.district.trim()) {
-      Alert.alert('Error', 'Please enter your district');
+      showError('Please enter your district');
       return false;
     }
 
     return true;
   };
 
-  const handleRegister = () => {
-    if (validateForm()) {
-      Alert.alert(
-        'Success',
-        'Registration successful! Please login with your mobile number.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('Login'),
-          },
-        ]
-      );
+  const handleRegister = async () => {
+    console.log('Register button pressed');
+    
+    if (!validateForm()) {
+      return;
     }
+
+    setIsLoading(true);
+
+    try {
+      // Prepare user data with selected role
+      const userData = {
+        fullName: formData.fullName,
+        mobileNumber: formData.mobileNumber,
+        email: formData.email,
+        password: formData.password,
+        aadharNumber: formData.aadharNumber,
+        address: formData.address,
+        pincode: formData.pincode,
+        state: formData.state,
+        district: formData.district,
+        role: selectedRole,
+      };
+
+      console.log('Registering user:', { ...userData, password: '***' });
+
+      // Register user using StorageService
+      const result = await StorageService.registerUser(userData);
+
+      console.log('Registration result:', result);
+
+      if (result.success) {
+        // Show success modal
+        setShowSuccessModal(true);
+      } else {
+        // Show error modal with message from service
+        showError(result.message || 'Registration failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      showError('An error occurred during registration. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    navigation.navigate('Login');
   };
 
   return (
@@ -106,7 +168,7 @@ const RegisterScreen = ({ navigation }) => {
             <View style={styles.header}>
               <TouchableOpacity
                 style={styles.backButton}
-                onPress={() => navigation.goBack()}
+                onPress={() => navigation.navigate('Login')}
               >
                 <Text style={styles.backIcon}>←</Text>
               </TouchableOpacity>
@@ -191,6 +253,7 @@ const RegisterScreen = ({ navigation }) => {
                   placeholder="Enter your full name"
                   value={formData.fullName}
                   onChangeText={(text) => handleInputChange('fullName', text)}
+                  editable={!isLoading}
                 />
 
                 <InputField
@@ -201,6 +264,7 @@ const RegisterScreen = ({ navigation }) => {
                   onChangeText={(text) => handleInputChange('mobileNumber', text)}
                   keyboardType="phone-pad"
                   maxLength={10}
+                  editable={!isLoading}
                 />
 
                 <InputField
@@ -210,6 +274,31 @@ const RegisterScreen = ({ navigation }) => {
                   value={formData.email}
                   onChangeText={(text) => handleInputChange('email', text)}
                   keyboardType="email-address"
+                  editable={!isLoading}
+                />
+
+                <PasswordField
+                  icon="🔒"
+                  label="Password"
+                  placeholder="Minimum 6 characters"
+                  value={formData.password}
+                  onChangeText={(text) => handleInputChange('password', text)}
+                  secureTextEntry={!showPassword}
+                  showPassword={showPassword}
+                  toggleShowPassword={() => setShowPassword(!showPassword)}
+                  editable={!isLoading}
+                />
+
+                <PasswordField
+                  icon="🔒"
+                  label="Confirm Password"
+                  placeholder="Re-enter your password"
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => handleInputChange('confirmPassword', text)}
+                  secureTextEntry={!showConfirmPassword}
+                  showPassword={showConfirmPassword}
+                  toggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
+                  editable={!isLoading}
                 />
 
                 <InputField
@@ -220,6 +309,7 @@ const RegisterScreen = ({ navigation }) => {
                   onChangeText={(text) => handleInputChange('aadharNumber', text)}
                   keyboardType="number-pad"
                   maxLength={12}
+                  editable={!isLoading}
                 />
               </View>
 
@@ -234,6 +324,7 @@ const RegisterScreen = ({ navigation }) => {
                   value={formData.address}
                   onChangeText={(text) => handleInputChange('address', text)}
                   multiline
+                  editable={!isLoading}
                 />
 
                 <View style={styles.rowContainer}>
@@ -246,6 +337,7 @@ const RegisterScreen = ({ navigation }) => {
                       onChangeText={(text) => handleInputChange('pincode', text)}
                       keyboardType="number-pad"
                       maxLength={6}
+                      editable={!isLoading}
                     />
                   </View>
                   <View style={styles.halfWidth}>
@@ -255,6 +347,7 @@ const RegisterScreen = ({ navigation }) => {
                       placeholder="Your district"
                       value={formData.district}
                       onChangeText={(text) => handleInputChange('district', text)}
+                      editable={!isLoading}
                     />
                   </View>
                 </View>
@@ -265,15 +358,22 @@ const RegisterScreen = ({ navigation }) => {
                   placeholder="Your state"
                   value={formData.state}
                   onChangeText={(text) => handleInputChange('state', text)}
+                  editable={!isLoading}
                 />
               </View>
 
               {/* Register Button */}
               <TouchableOpacity
-                style={styles.registerButton}
+                style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
                 onPress={handleRegister}
+                disabled={isLoading}
+                activeOpacity={0.7}
               >
-                <Text style={styles.registerButtonText}>Register</Text>
+                {isLoading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={styles.registerButtonText}>Register</Text>
+                )}
               </TouchableOpacity>
 
               {/* Login Link */}
@@ -287,6 +387,58 @@ const RegisterScreen = ({ navigation }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleSuccessClose}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.successIconContainer}>
+              <Text style={styles.successIcon}>✅</Text>
+            </View>
+            <Text style={styles.modalTitle}>Registration Successful!</Text>
+            <Text style={styles.modalMessage}>
+              Your account has been created successfully. Please login with your mobile number and password.
+            </Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleSuccessClose}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.errorIconContainer}>
+              <Text style={styles.errorIcon}>❌</Text>
+            </View>
+            <Text style={styles.modalTitle}>Registration Error</Text>
+            <Text style={styles.modalMessage}>{errorMessage}</Text>
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setShowErrorModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 };
@@ -302,6 +454,7 @@ const InputField = ({
   keyboardType = 'default',
   maxLength,
   multiline = false,
+  editable = true,
 }) => (
   <View style={styles.inputContainer}>
     <Text style={styles.label}>{label}</Text>
@@ -317,7 +470,41 @@ const InputField = ({
         maxLength={maxLength}
         multiline={multiline}
         numberOfLines={multiline ? 3 : 1}
+        editable={editable}
       />
+    </View>
+  </View>
+);
+
+/* -------- PASSWORD FIELD COMPONENT -------- */
+
+const PasswordField = ({
+  icon,
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  secureTextEntry,
+  showPassword,
+  toggleShowPassword,
+  editable = true,
+}) => (
+  <View style={styles.inputContainer}>
+    <Text style={styles.label}>{label}</Text>
+    <View style={styles.inputWrapper}>
+      <Text style={styles.inputIcon}>{icon}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        placeholderTextColor="#999"
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={secureTextEntry}
+        editable={editable}
+      />
+      <TouchableOpacity onPress={toggleShowPassword} style={styles.eyeButton}>
+        <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+      </TouchableOpacity>
     </View>
   </View>
 );
@@ -507,6 +694,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
+  eyeButton: {
+    padding: 5,
+  },
+
+  eyeIcon: {
+    fontSize: 20,
+  },
+
   /* Row Container */
 
   rowContainer: {
@@ -534,6 +729,10 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 
+  registerButtonDisabled: {
+    opacity: 0.6,
+  },
+
   registerButtonText: {
     color: '#FFF',
     fontSize: 17,
@@ -556,6 +755,94 @@ const styles = StyleSheet.create({
   loginLink: {
     fontSize: 14,
     color: '#3D6B4D',
+    fontWeight: '700',
+  },
+
+  /* Modals */
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  modalContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 30,
+    width: '90%',
+    maxWidth: 400,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  successIcon: {
+    fontSize: 48,
+  },
+
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+
+  errorIcon: {
+    fontSize: 48,
+  },
+
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2D5F3F',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+
+  modalMessage: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 25,
+  },
+
+  modalButton: {
+    backgroundColor: '#3D6B4D',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+    minWidth: 200,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '700',
   },
 });
