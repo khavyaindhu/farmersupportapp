@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,63 @@ import {
   ScrollView,
   StatusBar,
   ImageBackground,
+  Alert,
 } from 'react-native';
+import StorageService from '../services/StorageService';
 
 const ExpertDashboard = ({ navigation }) => {
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const currentUser = await StorageService.getCurrentUser();
+      console.log('Current user:', currentUser);
+      
+      if (currentUser) {
+        setUserData(currentUser);
+      } else {
+        Alert.alert('Error', 'No user logged in');
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      Alert.alert('Error', 'Failed to load user data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            await StorageService.logout();
+            navigation.replace('Login');
+          },
+        },
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -17,14 +71,17 @@ const ExpertDashboard = ({ navigation }) => {
       {/* HEADER */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.backButton}>←</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backButton}>←</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>🌾 Expert / Officer</Text>
-          <Text style={styles.icon}>⚙️</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.icon}>⚙️</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView>
-
         {/* BANNER */}
         <ImageBackground
           source={{
@@ -34,40 +91,116 @@ const ExpertDashboard = ({ navigation }) => {
           imageStyle={{ borderRadius: 20 }}
         >
           <View style={styles.overlay}>
-            <Text style={styles.bannerTitle}>Welcome, Prakash</Text>
-            <Text style={styles.bannerSub}>Field Expert / Officer</Text>
+            <Text style={styles.bannerTitle}>
+              Welcome, {userData?.fullName || 'Officer'}
+            </Text>
+            <Text style={styles.bannerSub}>
+              Agricultural Officer - {userData?.district}
+            </Text>
           </View>
         </ImageBackground>
 
-        {/* MENU */}
+        {/* OFFICER FEATURES MENU */}
         <View style={styles.menuList}>
+          {/* 1. My Profile */}
+          <MenuItem
+            icon="👤"
+            title="My Profile"
+            subtitle="View and edit profile"
+            onPress={() => navigation.navigate('Profile')}
+          />
+
+          {/* 2. Assigned Farmers */}
           <MenuItem
             icon="👨‍🌾"
-            title="Farmer"
-            subtitle="Assigned Farmers"
+            title="Assigned Farmers"
+            subtitle="View and manage farmers"
+            badge="87"
+            onPress={() => Alert.alert('Farmers', 'Farmer list coming soon')}
           />
+
+          {/* 3. Farmer Queries */}
           <MenuItem
-            icon="🌾"
-            title="मेरे खेत"
-            subtitle="देखें और प्रबंधित करें"
+            icon="❓"
+            title="Farmer Queries"
+            subtitle="Pending support requests"
+            badge="12"
+            onPress={() => Alert.alert('Queries', 'Query management coming soon')}
           />
+
+          {/* 4. Crop Guidance */}
           <MenuItem
             icon="🌱"
-            title="फसल मार्गदर्शन"
-            subtitle="किसान मार्गदर्शन देखें"
+            title="Provide Crop Guidance"
+            subtitle="Give expert advice"
+            onPress={() => Alert.alert('Guidance', 'Crop guidance module coming soon')}
           />
+
+          {/* 5. Field Visits */}
+          <MenuItem
+            icon="📍"
+            title="Field Visit Schedule"
+            subtitle="Plan and track visits"
+            onPress={() => Alert.alert('Visits', 'Field visit module coming soon')}
+          />
+
+          {/* 6. Disease Monitoring */}
+          <MenuItem
+            icon="🦠"
+            title="Disease Monitoring"
+            subtitle="Track crop diseases"
+            badge="3"
+            onPress={() => Alert.alert('Disease', 'Disease monitoring coming soon')}
+          />
+
+          {/* 7. Weather Information */}
+          <MenuItem
+            icon="🌤️"
+            title="Weather Information"
+            subtitle="Weather for your zone"
+            onPress={() => Alert.alert('Weather', 'Weather module coming soon')}
+          />
+
+          {/* 8. Market Prices */}
           <MenuItem
             icon="📊"
-            title="बिक और तीर्थ तीना"
-            subtitle="एपीएमसी दरें देखें"
+            title="Market Prices (APMC)"
+            subtitle="Daily mandi rates"
+            onPress={() => Alert.alert('Market', 'Market module coming soon')}
           />
+
+          {/* 9. Government Schemes */}
           <MenuItem
-            icon="📋"
-            title="सहायताक मांगण"
-            subtitle="Support Requests"
+            icon="🏛️"
+            title="Government Schemes"
+            subtitle="Share scheme information"
+            onPress={() => Alert.alert('Schemes', 'Schemes module coming soon')}
+          />
+
+          {/* 10. Training Sessions */}
+          <MenuItem
+            icon="📚"
+            title="Training Sessions"
+            subtitle="Organize farmer training"
+            onPress={() => Alert.alert('Training', 'Training module coming soon')}
+          />
+
+          {/* 11. Reports */}
+          <MenuItem
+            icon="📄"
+            title="Generate Reports"
+            subtitle="Activity and progress reports"
+            onPress={() => Alert.alert('Reports', 'Report module coming soon')}
+          />
+
+          {/* 12. Notifications */}
+          <MenuItem
+            icon="🔔"
+            title="Send Notifications"
+            subtitle="Alert farmers about updates"
+            onPress={() => Alert.alert('Notifications', 'Notification module coming soon')}
           />
         </View>
-
       </ScrollView>
     </View>
   );
@@ -75,13 +208,20 @@ const ExpertDashboard = ({ navigation }) => {
 
 /* ---------------- COMPONENT ---------------- */
 
-const MenuItem = ({ icon, title, subtitle }) => (
-  <TouchableOpacity style={styles.menuItem}>
+const MenuItem = ({ icon, title, subtitle, badge, onPress }) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <Text style={styles.menuIcon}>{icon}</Text>
     <View style={styles.menuTextContainer}>
       <Text style={styles.menuTitle}>{title}</Text>
-      <Text style={styles.menuSubtitle}>{subtitle}</Text>
+      {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
     </View>
+
+    {badge && (
+      <View style={styles.badge}>
+        <Text style={styles.badgeText}>{badge}</Text>
+      </View>
+    )}
+
     <Text style={styles.chevron}>›</Text>
   </TouchableOpacity>
 );
@@ -92,6 +232,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F3F7F2',
+  },
+
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
   },
 
   header: {
@@ -194,6 +344,20 @@ const styles = StyleSheet.create({
   menuSubtitle: {
     fontSize: 12,
     color: '#666',
+  },
+
+  badge: {
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+
+  badgeText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   chevron: {
