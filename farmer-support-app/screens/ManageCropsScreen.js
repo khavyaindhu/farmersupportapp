@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,17 +6,135 @@ import {
   StyleSheet,
   ScrollView,
   StatusBar,
-  Image,
+  Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const CROPS_STORAGE_KEY = '@farmer_crops';
 
 const ManageCropsScreen = ({ navigation }) => {
-  const crops = [
-    { id: 1, name: 'Onion', icon: '🧅', status: 'Edit' },
-    { id: 2, name: 'Tomato', icon: '🍅', status: 'Delete' },
-    { id: 3, name: 'Grapes', icon: '🍇', status: 'Delete' },
-    { id: 4, name: 'Sugarcane', icon: '🌿', status: 'Delete' },
-    { id: 5, name: 'Wheat', icon: '🌾', status: 'Delete' },
-  ];
+  const [crops, setCrops] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState(null);
+  const [newCrop, setNewCrop] = useState({
+    name: '',
+    area: '',
+    sowingDate: '',
+  });
+
+  useEffect(() => {
+    loadCrops();
+  }, []);
+
+  const loadCrops = async () => {
+    try {
+      const cropsData = await AsyncStorage.getItem(CROPS_STORAGE_KEY);
+      if (cropsData) {
+        setCrops(JSON.parse(cropsData));
+      } else {
+        // Initialize with default crops
+        const defaultCrops = [
+          { id: '1', name: 'Onion', icon: '🧅', area: '2.5', sowingDate: '2025-01-15', status: 'Active' },
+          { id: '2', name: 'Tomato', icon: '🍅', area: '1.5', sowingDate: '2025-01-20', status: 'Active' },
+          { id: '3', name: 'Grapes', icon: '🍇', area: '3.0', sowingDate: '2025-02-01', status: 'Active' },
+          { id: '4', name: 'Sugarcane', icon: '🌿', area: '5.0', sowingDate: '2024-11-10', status: 'Active' },
+          { id: '5', name: 'Wheat', icon: '🌾', area: '4.0', sowingDate: '2024-11-01', status: 'Active' },
+        ];
+        await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(defaultCrops));
+        setCrops(defaultCrops);
+      }
+    } catch (error) {
+      console.error('Error loading crops:', error);
+    }
+  };
+
+  const handleAddCrop = async () => {
+    if (!newCrop.name || !newCrop.area || !newCrop.sowingDate) {
+      Alert.alert('Error', 'Please fill all fields');
+      return;
+    }
+
+    const crop = {
+      id: Date.now().toString(),
+      name: newCrop.name,
+      icon: getCropIcon(newCrop.name),
+      area: newCrop.area,
+      sowingDate: newCrop.sowingDate,
+      status: 'Active',
+    };
+
+    const updatedCrops = [...crops, crop];
+    await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
+    setCrops(updatedCrops);
+    setShowAddModal(false);
+    setNewCrop({ name: '', area: '', sowingDate: '' });
+    Alert.alert('Success', 'Crop added successfully');
+  };
+
+  const handleEditCrop = (crop) => {
+    setSelectedCrop(crop);
+    setNewCrop({
+      name: crop.name,
+      area: crop.area,
+      sowingDate: crop.sowingDate,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCrop = async () => {
+    const updatedCrops = crops.map(crop =>
+      crop.id === selectedCrop.id
+        ? { ...crop, name: newCrop.name, area: newCrop.area, sowingDate: newCrop.sowingDate }
+        : crop
+    );
+    await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
+    setCrops(updatedCrops);
+    setShowEditModal(false);
+    setNewCrop({ name: '', area: '', sowingDate: '' });
+    Alert.alert('Success', 'Crop updated successfully');
+  };
+
+  const handleDeleteCrop = (cropId) => {
+    Alert.alert(
+      'Delete Crop',
+      'Are you sure you want to delete this crop?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const updatedCrops = crops.filter(c => c.id !== cropId);
+            await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
+            setCrops(updatedCrops);
+            Alert.alert('Success', 'Crop deleted successfully');
+          },
+        },
+      ]
+    );
+  };
+
+  const getCropIcon = (cropName) => {
+    const icons = {
+      onion: '🧅',
+      tomato: '🍅',
+      grapes: '🍇',
+      sugarcane: '🌿',
+      wheat: '🌾',
+      rice: '🌾',
+      potato: '🥔',
+      carrot: '🥕',
+      corn: '🌽',
+    };
+    return icons[cropName.toLowerCase()] || '🌱';
+  };
+
+  const getTotalArea = () => {
+    return crops.reduce((sum, crop) => sum + parseFloat(crop.area || 0), 0).toFixed(1);
+  };
 
   return (
     <View style={styles.container}>
@@ -28,93 +146,212 @@ const ManageCropsScreen = ({ navigation }) => {
             <Text style={styles.backButton}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>🌾 Manage Crops</Text>
-          <View style={styles.headerIcons}>
+          <TouchableOpacity onPress={() => navigation.navigate('CropAnalytics')}>
             <Text style={styles.icon}>📊</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.topSection}>
-          <View style={styles.distributionCard}>
-            <Text style={styles.distributionTitle}>Distribution</Text>
-            <View style={styles.distributionStats}>
-              <View style={styles.statItem}>
-                <View style={[styles.statDot, { backgroundColor: '#FF6B6B' }]} />
-                <Text style={styles.statText}>Visits</Text>
-              </View>
-              <View style={styles.statItem}>
-                <View style={[styles.statDot, { backgroundColor: '#4ECDC4' }]} />
-                <Text style={styles.statText}>Territory</Text>
-              </View>
-            </View>
+        {/* Statistics Card */}
+        <View style={styles.statsCard}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Total Crops</Text>
+            <Text style={styles.statValue}>{crops.length}</Text>
           </View>
-
-          <View style={styles.tabContainer}>
-            <TouchableOpacity style={[styles.tab, styles.tabActive]}>
-              <Text style={[styles.tabText, styles.tabTextActive]}>Field Owners</Text>
-            </TouchableOpacity>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Total Area</Text>
+            <Text style={styles.statValue}>{getTotalArea()} acres</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Active</Text>
+            <Text style={styles.statValue}>{crops.length}</Text>
           </View>
         </View>
 
-        <View style={styles.imageSection}>
-          <Text style={styles.imageTitle}>Tomato Last Spots ⚠️(गहू)</Text>
-          <Text style={styles.imageSubtitle}>कृपया विवरण देखें से चुनाव के साथ लिये देखें</Text>
-          
-          <View style={styles.imageContainer}>
-            <View style={styles.imagePlaceholder}>
-              <View style={styles.leafPattern}>
-                <Text style={styles.leafEmoji}>🍃</Text>
-              </View>
-              <Text style={styles.imageCaptionMain}>Properly not the population</Text>
-              <Text style={styles.imageCaptionSub}>Details will be or Identified later</Text>
-              <Text style={styles.imageCaptionDetails}>
-                कृषि विवाह का चुनाव होने भी वर्णन जारी किया है,
-                सहायताक भी बचाने में भ्रम्णः सहायता करें।
-              </Text>
-            </View>
-          </View>
+        {/* Add Crop Button */}
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => setShowAddModal(true)}
+        >
+          <Text style={styles.addButtonIcon}>➕</Text>
+          <Text style={styles.addButtonText}>Add New Crop</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.viewImageButton}>
-            <Text style={styles.viewImageButtonText}>View as Images</Text>
-          </TouchableOpacity>
-        </View>
-
+        {/* Alert Section */}
         <View style={styles.alertsSection}>
           <View style={styles.alertsHeader}>
             <Text style={styles.alertsTitle}>Alerts & Tips</Text>
-            <Text style={styles.alertsDate}>16 April 2</Text>
           </View>
           
           <View style={styles.alertCard}>
             <Text style={styles.alertIcon}>⚠️</Text>
             <Text style={styles.alertText}>
-              मौसम पूर्व साथ उद्योगास महत्वपूर्णता{'\n'}
-              Weather update: Heavy rainfall this...
+              मौसम अपडेट: इस सप्ताह भारी बारिश की संभावना{'\n'}
+              Weather update: Heavy rainfall expected this week
             </Text>
           </View>
         </View>
 
+        {/* Crops List */}
         <View style={styles.cropsSection}>
           <View style={styles.cropsSectionHeader}>
-            <Text style={styles.cropsSectionTitle}>Crop</Text>
+            <Text style={styles.cropsSectionTitle}>My Crops ({crops.length})</Text>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cropsList}>
-            {crops.map((crop) => (
-              <View key={crop.id} style={styles.cropCard}>
-                <Text style={styles.cropIcon}>{crop.icon}</Text>
-                <Text style={styles.cropName}>{crop.name}</Text>
-                <TouchableOpacity style={styles.cropButton}>
-                  <Text style={styles.cropButtonText}>{crop.status}</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
+          {crops.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>🌱</Text>
+              <Text style={styles.emptyText}>No crops added yet</Text>
+              <Text style={styles.emptySubtext}>Tap "Add New Crop" to get started</Text>
+            </View>
+          ) : (
+            <View style={styles.cropsGrid}>
+              {crops.map((crop) => (
+                <View key={crop.id} style={styles.cropCard}>
+                  <Text style={styles.cropIcon}>{crop.icon}</Text>
+                  <Text style={styles.cropName}>{crop.name}</Text>
+                  <Text style={styles.cropArea}>{crop.area} acres</Text>
+                  <View style={styles.cropActions}>
+                    <TouchableOpacity
+                      style={[styles.cropButton, styles.editButton]}
+                      onPress={() => handleEditCrop(crop)}
+                    >
+                      <Text style={styles.cropButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.cropButton, styles.deleteButton]}
+                      onPress={() => handleDeleteCrop(crop.id)}
+                    >
+                      <Text style={styles.cropButtonText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Navigation to other screens */}
+        <View style={styles.menuList}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('CropAnalytics')}
+          >
+            <Text style={styles.menuIcon}>📊</Text>
+            <Text style={styles.menuTitle}>Crop Analytics</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => Alert.alert('Coming Soon', 'Crop guidance feature coming soon')}
+          >
+            <Text style={styles.menuIcon}>📚</Text>
+            <Text style={styles.menuTitle}>Crop Information</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      <View style={styles.fieldBackground} />
+      {/* Add Crop Modal */}
+      <Modal
+        visible={showAddModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowAddModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add New Crop</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Crop Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., Wheat, Rice, Tomato"
+                value={newCrop.name}
+                onChangeText={(text) => setNewCrop({ ...newCrop, name: text })}
+              />
+
+              <Text style={styles.inputLabel}>Area (in acres)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., 2.5"
+                keyboardType="decimal-pad"
+                value={newCrop.area}
+                onChangeText={(text) => setNewCrop({ ...newCrop, area: text })}
+              />
+
+              <Text style={styles.inputLabel}>Sowing Date</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD (e.g., 2025-01-15)"
+                value={newCrop.sowingDate}
+                onChangeText={(text) => setNewCrop({ ...newCrop, sowingDate: text })}
+              />
+
+              <TouchableOpacity style={styles.submitButton} onPress={handleAddCrop}>
+                <Text style={styles.submitButtonText}>Add Crop</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Edit Crop Modal */}
+      <Modal
+        visible={showEditModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Crop</Text>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                <Text style={styles.closeButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Crop Name</Text>
+              <TextInput
+                style={styles.input}
+                value={newCrop.name}
+                onChangeText={(text) => setNewCrop({ ...newCrop, name: text })}
+              />
+
+              <Text style={styles.inputLabel}>Area (in acres)</Text>
+              <TextInput
+                style={styles.input}
+                keyboardType="decimal-pad"
+                value={newCrop.area}
+                onChangeText={(text) => setNewCrop({ ...newCrop, area: text })}
+              />
+
+              <Text style={styles.inputLabel}>Sowing Date</Text>
+              <TextInput
+                style={styles.input}
+                value={newCrop.sowingDate}
+                onChangeText={(text) => setNewCrop({ ...newCrop, sowingDate: text })}
+              />
+
+              <TouchableOpacity style={styles.submitButton} onPress={handleUpdateCrop}>
+                <Text style={styles.submitButtonText}>Update Crop</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -122,7 +359,7 @@ const ManageCropsScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5DC',
+    backgroundColor: '#F3F7F2',
   },
   header: {
     backgroundColor: '#2D5F3F',
@@ -145,147 +382,77 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  headerIcons: {
-    flexDirection: 'row',
-  },
   icon: {
     fontSize: 20,
+    color: '#FFF',
   },
   content: {
     flex: 1,
   },
-  topSection: {
-    padding: 20,
-  },
-  distributionCard: {
+
+  /* Statistics Card */
+  statsCard: {
     backgroundColor: '#FFF',
-    padding: 15,
-    borderRadius: 12,
+    margin: 20,
     marginBottom: 15,
-  },
-  distributionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  distributionStats: {
+    padding: 20,
+    borderRadius: 15,
     flexDirection: 'row',
-    gap: 20,
+    justifyContent: 'space-around',
+    elevation: 3,
   },
   statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 5,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#2D5F3F',
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: '#E0E0E0',
+  },
+
+  /* Add Button */
+  addButton: {
+    backgroundColor: '#4CAF50',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 15,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    elevation: 3,
   },
-  statDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  addButtonIcon: {
+    fontSize: 20,
+    marginRight: 10,
   },
-  statText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-  },
-  tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  tabActive: {
-    backgroundColor: '#4CAF50',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  tabTextActive: {
+  addButtonText: {
     color: '#FFF',
-    fontWeight: '600',
-  },
-  imageSection: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  imageTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
   },
-  imageSubtitle: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 15,
-  },
-  imageContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-  },
-  imagePlaceholder: {
-    backgroundColor: '#E8F5E9',
-    borderRadius: 8,
-    padding: 20,
-    alignItems: 'center',
-  },
-  leafPattern: {
-    marginBottom: 15,
-  },
-  leafEmoji: {
-    fontSize: 48,
-  },
-  imageCaptionMain: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  imageCaptionSub: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  imageCaptionDetails: {
-    fontSize: 11,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  viewImageButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  viewImageButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+
+  /* Alerts */
   alertsSection: {
     paddingHorizontal: 20,
     marginBottom: 20,
   },
   alertsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 10,
   },
   alertsTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
-  },
-  alertsDate: {
-    fontSize: 12,
-    color: '#666',
   },
   alertCard: {
     backgroundColor: '#FFF3CD',
@@ -304,14 +471,13 @@ const styles = StyleSheet.create({
     color: '#856404',
     lineHeight: 18,
   },
+
+  /* Crops Section */
   cropsSection: {
     paddingHorizontal: 20,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   cropsSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 15,
   },
   cropsSectionTitle: {
@@ -319,20 +485,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
-  cropsList: {
+  cropsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   cropCard: {
     backgroundColor: '#FFF',
     padding: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginRight: 12,
-    width: 100,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    width: '48%',
+    marginBottom: 15,
     elevation: 3,
   },
   cropIcon: {
@@ -343,28 +507,141 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+    marginBottom: 5,
+  },
+  cropArea: {
+    fontSize: 12,
+    color: '#666',
     marginBottom: 10,
   },
+  cropActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   cropButton: {
-    backgroundColor: '#FFE5B4',
     paddingHorizontal: 15,
     paddingVertical: 6,
     borderRadius: 12,
   },
+  editButton: {
+    backgroundColor: '#2196F3',
+  },
+  deleteButton: {
+    backgroundColor: '#FF5722',
+  },
   cropButtonText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#856404',
+    color: '#FFF',
   },
-  fieldBackground: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-    backgroundColor: '#C4B896',
-    opacity: 0.3,
-    zIndex: -1,
+
+  /* Empty State */
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyIcon: {
+    fontSize: 60,
+    marginBottom: 15,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#666',
+  },
+
+  /* Menu List */
+  menuList: {
+    paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  menuItem: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    elevation: 3,
+  },
+  menuIcon: {
+    fontSize: 24,
+    marginRight: 15,
+  },
+  menuTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#333',
+  },
+  chevron: {
+    fontSize: 22,
+    color: '#999',
+  },
+
+  /* Modal Styles */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#666',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  input: {
+    backgroundColor: '#F5F5F5',
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#DDD',
+  },
+  submitButton: {
+    backgroundColor: '#4CAF50',
+    padding: 15,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  submitButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

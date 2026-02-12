@@ -141,7 +141,7 @@ const ExpertDashboard = ({ navigation }) => {
             icon="📍"
             title="Field Visit Schedule"
             subtitle="Plan and track visits"
-            onPress={() => Alert.alert('Visits', 'Field visit module coming soon')}
+           onPress={() => navigation.navigate('VisitFrequency')}
           />
 
           {/* 6. Disease Monitoring */}

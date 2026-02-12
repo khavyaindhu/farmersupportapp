@@ -123,7 +123,7 @@ const FarmerDashboard = ({ navigation }) => {
             icon="🌾"
             title="My Crops"
             subtitle="Manage your crops"
-            onPress={() => Alert.alert('Crops', 'Crop module coming soon')}
+            onPress={() => navigation.navigate('ManageCrops')}
           />
 
           {/* 4. Crop Information */}
@@ -131,7 +131,7 @@ const FarmerDashboard = ({ navigation }) => {
             icon="📚"
             title="Crop Information"
             subtitle="Get crop guidance"
-            onPress={() => Alert.alert('Info', 'Crop information coming soon')}
+          onPress={() => navigation.navigate('CropAnalytics')}
           />
 
           {/* 5. Weather Module */}
