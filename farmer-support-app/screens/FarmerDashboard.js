@@ -251,12 +251,12 @@ www.farmersupportapp.gov.in`;
         {/* FARMER FEATURES MENU */}
         <View style={styles.menuList}>
           {/* 1. My Profile */}
-          <MenuItem
+          {/* <MenuItem
             icon="👤"
             title="My Profile"
             subtitle="View and edit profile"
             onPress={() => navigation.navigate('Profile')}
-          />
+          /> */}
 
           {/* 2. Location Module */}
           {/* <MenuItem
