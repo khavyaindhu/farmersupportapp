@@ -20,7 +20,11 @@
       "adaptiveIcon": {
         "backgroundColor": "#F5F5DC"
       },
-      "package": "com.farmersupport.app"
+      "package": "com.farmersupport.app",
+      "permissions": [
+    "android.permission.CAMERA",
+    "android.permission.READ_EXTERNAL_STORAGE"
+  ]
     }
   }
 }

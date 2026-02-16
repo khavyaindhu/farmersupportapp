@@ -11,6 +11,7 @@ import ExpertDashboard from './screens/ExpertDashboard';
 import ManageCropsScreen from './screens/ManageCropsScreen';
 import CropAnalyticsScreen from './screens/CropAnalyticsScreen';
 import VisitFrequencyScreen from './screens/VisitFrequencyScreen';
+import DiseaseDetectionScreen from './screens/DiseaseDetectionScreen';
 
 const Stack = createStackNavigator();
 
@@ -38,6 +39,11 @@ export default function App() {
         <Stack.Screen name="ManageCrops" component={ManageCropsScreen} />
         <Stack.Screen name="CropAnalytics" component={CropAnalyticsScreen} />
         <Stack.Screen name="VisitFrequency" component={VisitFrequencyScreen} />
+       <Stack.Screen
+  name="DiseaseDetection"
+  component={DiseaseDetectionScreen}
+  options={{ headerShown: false }}
+/>
       </Stack.Navigator>
     </NavigationContainer>
   );
