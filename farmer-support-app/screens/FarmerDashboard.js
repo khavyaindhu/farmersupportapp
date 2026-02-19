@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import StorageService from '../services/StorageService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GOVERNMENT_SCHEMES = [
   {
@@ -152,9 +153,36 @@ const FarmerDashboard = ({ navigation }) => {
   const getWeatherInfo = () =>
     `📍 ${userData?.district}, ${userData?.state}\n\n🌡️ Current Temperature: 28°C\n💧 Humidity: 65%\n💨 Wind Speed: 12 km/h\n☁️ Conditions: Partly Cloudy\n\n📅 5-Day Forecast:\n• Mon: 30°C - Sunny ☀️\n• Tue: 28°C - Cloudy ☁️\n• Wed: 26°C - Rainy 🌧️\n• Thu: 27°C - Partly Cloudy ⛅\n• Fri: 29°C - Sunny ☀️\n\n💡 Farming Tip: Good weather conditions for irrigation this week.`;
 
-  const getMarketInfo = () =>
-    `📊 Today's APMC Market Prices\n📍 ${userData?.district} Mandi\n\n🌾 Cereals:\n• Wheat: ₹2,150/quintal\n• Rice (Paddy): ₹1,940/quintal\n• Maize: ₹1,850/quintal\n\n🫘 Pulses:\n• Tur Dal: ₹6,200/quintal\n• Moong: ₹7,500/quintal\n• Chana: ₹5,100/quintal\n\n🥬 Vegetables:\n• Tomato: ₹25/kg\n• Onion: ₹30/kg\n• Potato: ₹22/kg\n\n📈 Trend: Prices stable compared to last week\n🔔 Best time to sell: Wheat & Pulses`;
+const getMarketInfo = async () => {
+  // Load the farmer's crops from storage
+  const cropsData = await AsyncStorage.getItem('@farmer_crops');
+  const farmerCrops = cropsData ? JSON.parse(cropsData) : [];
+  const farmerCropNames = farmerCrops.map(c => c.name.toLowerCase());
 
+  const allPrices = {
+    wheat: '₹2,150/quintal',
+    rice: '₹1,940/quintal',
+    maize: '₹1,850/quintal',
+    tomato: '₹25/kg',
+    onion: '₹30/kg',
+    potato: '₹22/kg',
+    grapes: '₹80/kg',
+    sugarcane: '₹350/quintal',
+  };
+
+  let mycropsSection = '';
+  if (farmerCropNames.length > 0) {
+    const lines = farmerCropNames
+      .filter(name => allPrices[name])
+      .map(name => `• ${name.charAt(0).toUpperCase() + name.slice(1)}: ${allPrices[name]} ⭐`)
+      .join('\n');
+    mycropsSection = lines
+      ? `🌾 YOUR CROPS TODAY:\n${lines}\n\n`
+      : '';
+  }
+
+  return `📊 Today's APMC Market Prices\n📍 ${userData?.district} Mandi\n\n${mycropsSection}📦 All Commodities:\n• Wheat: ₹2,150/quintal\n• Rice: ₹1,940/quintal\n• Tomato: ₹25/kg\n• Onion: ₹30/kg\n• Potato: ₹22/kg\n• Grapes: ₹80/kg\n• Sugarcane: ₹350/quintal`;
+};
   const getNotifications = () =>
     `🔔 Recent Notifications\n\n⚠️ Weather Alert (2 hours ago)\nHeavy rainfall expected in next 48 hours.\n\n💰 Market Update (Today)\nWheat prices increased by ₹50/quintal.\n\n🏛️ New Scheme (Yesterday)\nPM-KISAN 16th installment released.\n\n📢 General (2 days ago)\nFree soil health camp on 20th Feb.\n\n🌾 Advisory (3 days ago)\nApply pre-monsoon fertilizers for better yield.`;
 
@@ -240,8 +268,9 @@ const FarmerDashboard = ({ navigation }) => {
           <MenuItem icon="🌤️" title="Weather Information" subtitle="Current weather & forecast"
             onPress={() => showModal('Weather Information', getWeatherInfo())} />
           <MenuItem icon="📊" title="Market Prices (Mandi)" subtitle="Daily APMC rates"
-            onPress={() => showModal('Market Prices', getMarketInfo())} />
-          <MenuItem
+            onPress={async () => showModal('Market Prices', await getMarketInfo())}
+          />
+            <MenuItem
             icon="🏛️"
             title="Government Schemes"
             subtitle={selectedScheme ? `Active: ${selectedScheme.name}` : 'Subsidies & insurance'}
