@@ -4,13 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEYS = {
   USERS: '@farmer_app_users',
   CURRENT_USER: '@farmer_app_current_user',
+  SELECTED_SCHEME: '@farmer_app_selected_scheme', // ← NEW
 };
 
 /**
  * Storage Service for managing user data locally
  */
 class StorageService {
-  
+
   /**
    * Get all registered users
    */
@@ -26,126 +27,57 @@ class StorageService {
 
   /**
    * Save a new user to local storage
-   * @param {Object} userData - User registration data
-   * @returns {Promise<Object>} Result object with success status and message
    */
   static async registerUser(userData) {
     try {
       const users = await this.getAllUsers();
-      
-      console.log('Current users count:', users.length);
-      
-      // Check if mobile number already exists
-      const existingUser = users.find(
-        user => user.mobileNumber === userData.mobileNumber
-      );
-      
-      if (existingUser) {
-        return {
-          success: false,
-          message: 'Mobile number already registered',
-        };
-      }
+      const existingUser = users.find(user => user.mobileNumber === userData.mobileNumber);
+      if (existingUser) return { success: false, message: 'Mobile number already registered' };
 
-      // Check if email already exists
-      const existingEmail = users.find(
-        user => user.email.toLowerCase() === userData.email.toLowerCase()
-      );
-      
-      if (existingEmail) {
-        return {
-          success: false,
-          message: 'Email already registered',
-        };
-      }
+      const existingEmail = users.find(user => user.email.toLowerCase() === userData.email.toLowerCase());
+      if (existingEmail) return { success: false, message: 'Email already registered' };
 
-      // Create new user object with timestamp
       const newUser = {
         ...userData,
-        id: Date.now().toString(), // Simple unique ID
+        id: Date.now().toString(),
         registeredAt: new Date().toISOString(),
         isActive: true,
       };
 
-      // Add new user to the list
       users.push(newUser);
-      
-      console.log('Saving user:', { ...newUser, password: '***' });
-      
-      // Save to AsyncStorage
       await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-      
-      console.log('User saved successfully. Total users:', users.length);
-      
-      return {
-        success: true,
-        message: 'Registration successful',
-        user: newUser,
-      };
+      return { success: true, message: 'Registration successful', user: newUser };
     } catch (error) {
       console.error('Error registering user:', error);
-      return {
-        success: false,
-        message: 'Registration failed. Please try again.',
-      };
+      return { success: false, message: 'Registration failed. Please try again.' };
     }
   }
 
   /**
    * Login user with mobile number, password, and role
-   * @param {string} mobileNumber - User's mobile number
-   * @param {string} password - User's password
-   * @param {string} role - User's role (farmer/officer/admin)
-   * @returns {Promise<Object>} Result object with success status and user data
    */
   static async loginUser(mobileNumber, password, role) {
     try {
       const users = await this.getAllUsers();
-      
-      console.log('Login attempt - Total users:', users.length);
-      console.log('Looking for:', { mobileNumber, role });
-      
-      // Find user with matching mobile number, password, and role
       const user = users.find(
-        u => u.mobileNumber === mobileNumber && 
-             u.password === password && 
-             u.role === role && 
-             u.isActive
+        u => u.mobileNumber === mobileNumber &&
+          u.password === password &&
+          u.role === role &&
+          u.isActive
       );
-      
-      if (!user) {
-        console.log('User not found or credentials invalid');
-        return {
-          success: false,
-          message: 'Invalid credentials or role mismatch',
-        };
-      }
 
-      console.log('User found:', { ...user, password: '***' });
+      if (!user) return { success: false, message: 'Invalid credentials or role mismatch' };
 
-      // Save current user session
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.CURRENT_USER,
-        JSON.stringify(user)
-      );
-      
-      return {
-        success: true,
-        message: 'Login successful',
-        user: user,
-      };
+      await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      return { success: true, message: 'Login successful', user };
     } catch (error) {
       console.error('Error logging in:', error);
-      return {
-        success: false,
-        message: 'Login failed. Please try again.',
-      };
+      return { success: false, message: 'Login failed. Please try again.' };
     }
   }
 
   /**
    * Get current logged-in user
-   * @returns {Promise<Object|null>} Current user object or null
    */
   static async getCurrentUser() {
     try {
@@ -172,57 +104,30 @@ class StorageService {
 
   /**
    * Update user profile
-   * @param {string} userId - User ID
-   * @param {Object} updates - Fields to update
    */
   static async updateUser(userId, updates) {
     try {
       const users = await this.getAllUsers();
       const userIndex = users.findIndex(u => u.id === userId);
-      
-      if (userIndex === -1) {
-        return {
-          success: false,
-          message: 'User not found',
-        };
-      }
+      if (userIndex === -1) return { success: false, message: 'User not found' };
 
-      // Update user data
-      users[userIndex] = {
-        ...users[userIndex],
-        ...updates,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Save to storage
+      users[userIndex] = { ...users[userIndex], ...updates, updatedAt: new Date().toISOString() };
       await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
-      // Update current user if it's the same user
       const currentUser = await this.getCurrentUser();
       if (currentUser && currentUser.id === userId) {
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.CURRENT_USER,
-          JSON.stringify(users[userIndex])
-        );
+        await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(users[userIndex]));
       }
 
-      return {
-        success: true,
-        message: 'Profile updated successfully',
-        user: users[userIndex],
-      };
+      return { success: true, message: 'Profile updated successfully', user: users[userIndex] };
     } catch (error) {
       console.error('Error updating user:', error);
-      return {
-        success: false,
-        message: 'Update failed',
-      };
+      return { success: false, message: 'Update failed' };
     }
   }
 
   /**
    * Get user by mobile number
-   * @param {string} mobileNumber
    */
   static async getUserByMobile(mobileNumber) {
     try {
@@ -234,16 +139,67 @@ class StorageService {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // SCHEME METHODS (NEW)
+  // ─────────────────────────────────────────────────────────────
+
+  /**
+   * Save the selected government scheme for a user.
+   * Key is per-user so multiple farmers don't overwrite each other.
+   * @param {string} userId
+   * @param {Object} scheme - { id, name, icon, benefit, description }
+   */
+  static async saveSelectedScheme(userId, scheme) {
+    try {
+      const key = `${STORAGE_KEYS.SELECTED_SCHEME}_${userId}`;
+      const data = { ...scheme, appliedAt: new Date().toISOString() };
+      await AsyncStorage.setItem(key, JSON.stringify(data));
+      return { success: true };
+    } catch (error) {
+      console.error('Error saving scheme:', error);
+      return { success: false };
+    }
+  }
+
+  /**
+   * Get the currently selected scheme for a user.
+   * @param {string} userId
+   * @returns {Object|null}
+   */
+  static async getSelectedScheme(userId) {
+    try {
+      const key = `${STORAGE_KEYS.SELECTED_SCHEME}_${userId}`;
+      const json = await AsyncStorage.getItem(key);
+      return json ? JSON.parse(json) : null;
+    } catch (error) {
+      console.error('Error getting scheme:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Remove the selected scheme for a user.
+   * @param {string} userId
+   */
+  static async removeSelectedScheme(userId) {
+    try {
+      const key = `${STORAGE_KEYS.SELECTED_SCHEME}_${userId}`;
+      await AsyncStorage.removeItem(key);
+      return { success: true };
+    } catch (error) {
+      console.error('Error removing scheme:', error);
+      return { success: false };
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+
   /**
    * Seed initial admin user (for first-time setup)
    */
   static async seedInitialUsers() {
     try {
       const users = await this.getAllUsers();
-      
-      console.log('Seeding users. Current count:', users.length);
-      
-      // Only seed if no users exist
       if (users.length === 0) {
         const initialUsers = [
           {
@@ -292,32 +248,13 @@ class StorageService {
             isActive: true,
           },
         ];
-
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.USERS,
-          JSON.stringify(initialUsers)
-        );
-
-        console.log('Initial users seeded successfully:', initialUsers.length);
-
-        return {
-          success: true,
-          message: 'Initial users created',
-        };
+        await AsyncStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
+        return { success: true, message: 'Initial users created' };
       }
-
-      console.log('Users already exist, skipping seed');
-      
-      return {
-        success: true,
-        message: 'Users already exist',
-      };
+      return { success: true, message: 'Users already exist' };
     } catch (error) {
       console.error('Error seeding users:', error);
-      return {
-        success: false,
-        message: 'Failed to seed users',
-      };
+      return { success: false, message: 'Failed to seed users' };
     }
   }
 
@@ -326,11 +263,7 @@ class StorageService {
    */
   static async clearAllData() {
     try {
-      await AsyncStorage.multiRemove([
-        STORAGE_KEYS.USERS,
-        STORAGE_KEYS.CURRENT_USER,
-      ]);
-      console.log('All data cleared');
+      await AsyncStorage.multiRemove([STORAGE_KEYS.USERS, STORAGE_KEYS.CURRENT_USER]);
       return { success: true };
     } catch (error) {
       console.error('Error clearing data:', error);
