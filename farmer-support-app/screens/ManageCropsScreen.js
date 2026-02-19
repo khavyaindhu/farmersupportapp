@@ -97,25 +97,31 @@ const ManageCropsScreen = ({ navigation }) => {
     Alert.alert('Success', 'Crop updated successfully');
   };
 
-  const handleDeleteCrop = (cropId) => {
-    Alert.alert(
-      'Delete Crop',
-      'Are you sure you want to delete this crop?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedCrops = crops.filter(c => c.id !== cropId);
-            await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
-            setCrops(updatedCrops);
-            Alert.alert('Success', 'Crop deleted successfully');
-          },
-        },
-      ]
-    );
-  };
+const handleDeleteCrop = async (cropId) => {
+  // Works on ALL platforms including web
+  const confirmed = window.confirm('Are you sure you want to delete this crop?');
+  if (!confirmed) return;
+
+  try {
+    const updatedCrops = crops.filter(c => c.id !== cropId);
+    await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
+    setCrops(updatedCrops);
+  } catch (error) {
+    console.error('Delete error:', error);
+  }
+};
+
+const deleteCrop = async (cropId) => {
+  try {
+    const updatedCrops = crops.filter(c => c.id !== cropId);
+    await AsyncStorage.setItem(CROPS_STORAGE_KEY, JSON.stringify(updatedCrops));
+    setCrops(updatedCrops); // ← this triggers re-render
+    Alert.alert('Success', 'Crop deleted successfully');
+  } catch (error) {
+    console.error('Delete error:', error);
+    Alert.alert('Error', 'Failed to delete crop');
+  }
+};
 
   const getCropIcon = (cropName) => {
     const icons = {
